@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using timelog.net.Models;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace timelog.net.Controllers
 {
@@ -7,11 +9,31 @@ namespace timelog.net.Controllers
     [Route("[controller]")]
     public class ProjectController : Controller
     {
-        [HttpGet]
-        public IActionResult GetProjects()
+        private ProjectContext DbContext { get; }
+
+        public ProjectController(ProjectContext dbContext)
         {
-            var data = new[] {new Project() {Id = "0", Title = "Test Project "}};
-            return Json(data);
+            DbContext = dbContext;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProjects()
+        {
+            return Json(await DbContext.Projects.ToListAsync());
+        }
+
+        [HttpGet]
+        [Route("{projectId:int}")]
+        public async Task<IActionResult> GetProject(int projectId)
+        {
+            var project = await DbContext.Projects
+                .Where(p => p.ProjectId == projectId)
+                .Include(p => p.Tasks)
+                .FirstOrDefaultAsync();
+
+            if (project is null) return NotFound();
+            
+            return Json(project);
         }
     }
 }

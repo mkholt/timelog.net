@@ -1,6 +1,10 @@
-import { CommandBar, ICommandBarItemProps, Stack, Text } from "@fluentui/react"
-import React from "react"
-import { useParams } from "react-router-dom"
+import React from 'react';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
+
+import { CommandBar, Dialog, getTheme, Stack, Text } from '@fluentui/react';
+
+import { TaskActions } from '../taskActions';
+
 //import { TaskActions } from "../components/taskActions"
 //import { CloseProject, GetProject, GetTasks } from "../connectors/entriesConnector"
 //import { ITask } from "../../../server/tasks"
@@ -8,14 +12,19 @@ import { useParams } from "react-router-dom"
 //import { AddTask } from "../components/project/addTask"
 
 export type IProject = {
-	id: string;
+	projectId: string;
 	title: string;
+	tasks: ITask[];
 }
 
 export type ITask = {
 	projectId: string;
 	taskId: string;
 	title: string;
+	externalId?: string;
+	url?: string;
+	icon?: string;
+	entries: IEntry[];
 }
 
 export type IEntry = {
@@ -30,11 +39,9 @@ export type IItem = IEntry & {
 	duration: number
 }
 
-type ProjectParams = {
-	id: string
-}
+const theme = getTheme()
 
-const getCommands = (addTask: () => void, closeProject: () => void): ICommandBarItemProps[] => [
+const getCommands = (addTask: () => void, closeProject: () => void) => [
 	{
 		key: "addTask",
 		text: "Add Task",
@@ -50,21 +57,22 @@ const getCommands = (addTask: () => void, closeProject: () => void): ICommandBar
 ]
 
 export const Project = () => {
-	const { id } = useParams<ProjectParams>()
+	const { projectId, taskId } = useParams()
 	const [project, setProject] = React.useState<IProject>()
 	//const [tasks, setTasks] = React.useState<ITask[]>([])
 
 	//const ctx = React.useContext(Context)
 
-	/*useEffect(() => {
+	React.useEffect(() => {
 		(async () => {
-			const project = await GetProject(id)
-			const tasks = await GetTasks(id)
+			if (!projectId) return
+			const project = await GetProject(projectId)
+			//const tasks = await GetTasks(id)
 
 			setProject(project)
-			setTasks(tasks)
+			//setTasks(tasks)
 		})()
-	}, [id])*/
+	}, [projectId])
 
 	const addTask = React.useCallback(() => {
 		/*if (!ctx.showDialog) return
@@ -83,20 +91,24 @@ export const Project = () => {
 			content: "Are you sure you want to close the project?",
 			onOkPressed: () => CloseProject(id).then()
 		})*/
-	}, [id])
+	}, [])
 
 	const commands = getCommands(addTask, closeProject)
+	const navigate = useNavigate()
 
 	return (
 		<Stack>
 			<Text variant="xLarge">Project: {project?.title}</Text>
 			<CommandBar items={commands} />
 			<Text variant="large">Active Tasks</Text>
-			{/*tasks.map((t, i) =>
-				<Stack horizontal verticalAlign="center" key={"t" + i}>
-					<TaskActions item={t} />
-					<Text>{t.title}</Text>
-				</Stack>)*/}
+			{project && project.tasks.map((t, i) =>
+				<Stack horizontal verticalAlign="center" key={"t" + i} tokens={{ childrenGap: theme.spacing.s2}}>
+					{<TaskActions item={t} />}
+					{t.title}
+				</Stack>)}
+			<Dialog hidden={!taskId} title="Edit Task" onDismiss={() => navigate("./")}>
+				<Outlet />
+			</Dialog>
 		</Stack>
 	)
 }
@@ -104,4 +116,9 @@ export const Project = () => {
 export const GetProjects = async () => {
 	const response = await fetch('project')
 	return await response.json() as IProject[]
+}
+
+export const GetProject = async (projectId: string): Promise<IProject> => {
+	const response = await fetch('project/' + projectId)
+	return await response.json() as IProject
 }

@@ -1,12 +1,13 @@
-import React from "react"
-import { INavLink, Nav } from '@fluentui/react'
-import { useNavigate } from "react-router-dom"
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { INavLink, Nav } from '@fluentui/react';
 
 export const Menubar = () => {
 	const navigate = useNavigate()
 	return (
 		<Nav
-			onLinkClick={(event: MouseEvent, element: INavLink | undefined) => {
+			onLinkClick={(event: React.MouseEvent|undefined, element: INavLink | undefined) => {
 				event?.preventDefault()
 				navigate(element?.url ?? "/")
 			}}
@@ -30,8 +31,6 @@ const links = [
 	{
 		links: [
 			link('Dashboard', '/', 'News'),
-			link('Counter', '/counter', 'Add'),
-			link('Fetch Data', '/fetch-data', 'CloudDownload'),
 			link('Settings', '/settings', 'PlayerSettings'),
 			link('Stats', '/stats', 'StackedLineChart'),
 		]

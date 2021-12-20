@@ -1,27 +1,31 @@
-import 'bootstrap/dist/css/bootstrap.css'
-import React from 'react'
-import ReactDOM from 'react-dom'
-import App from './App'
-import registerServiceWorker from './registerServiceWorker'
-import { BrowserRouter, Route, Routes } from "react-router-dom"
-import { Dashboard } from "./components/pages/dashboard"
-import { Counter } from "./components/pages/Counter"
-import { FetchData } from "./components/pages/FetchData"
-import { Settings } from "./components/pages/settings"
-import { Project } from "./components/pages/project"
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
 
-const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href')
+import { initializeIcons } from '@fluentui/react';
+
+import App from './App';
+import { Dashboard } from './components/pages/dashboard';
+import { Project } from './components/pages/project';
+import { Settings } from './components/pages/settings';
+import { Task } from './components/task';
+import registerServiceWorker from './registerServiceWorker';
+
+const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href') ?? ""
 const rootElement = document.getElementById('root')
+
+initializeIcons()
 
 ReactDOM.render(
 	<BrowserRouter basename={baseUrl}>
 		<Routes>
 			<Route path="/" element={<App />}>
 				<Route path="/" element={<Dashboard />} />
-				<Route path="counter" element={<Counter />} />
-				<Route path="fetch-data" element={<FetchData />} />
-				<Route path="settings" element={<Settings />}>
-					<Route path="project/:id" element={<Project />} />
+				<Route path="settings" element={<Outlet />}>
+					<Route path="" element={<Settings />} />
+					<Route path="project/:projectId" element={<Project />}>
+						<Route path="task/:taskId" element={<Task />} />
+					</Route>
 				</Route>
 				<Route path="stats" />
 				<Route path="logout" />

@@ -1,22 +1,18 @@
-import React from "react"
+import React from 'react';
+
 import {
-	CommandBar,
-	ConstrainMode,
-	DetailsList,
-	DetailsListLayoutMode,
-	IColumn,
-	ICommandBarItemProps,
-	Link,
-	Text
-} from "@fluentui/react"
-import { formatTime } from "../lib/time"
-import { Actions } from "./actions"
+    CommandBar, ConstrainMode, DetailsList, DetailsListLayoutMode, IColumn, ICommandBarItemProps,
+    Link, Text
+} from '@fluentui/react';
+
+import { formatTime } from '../lib/time';
+import { Actions } from './actions';
 //import { AddEntry } from "../addEntry"
 //import Context from "../../context"
 //import { GetProjects, IItem } from "../../connectors/entriesConnector"
 //import { IProject } from "../../../../server/endpoint/projects"
-import { toKey } from "./menubar"
-import { IItem, IProject } from "./pages/project"
+import { toKey } from './menubar';
+import { IItem, IProject } from './pages/project';
 
 export type ITaskListProps = {
 	items: any[] //IItem[]
@@ -73,7 +69,7 @@ const buildColumn = (name: string, minWidth: number, maxWidth?: number, onRender
 		maxWidth: maxWidth,
 		onRender: onRender,
 		fieldName: fieldName,
-		isSorted: isSortedDescending != undefined ? true : undefined,
+		isSorted: isSortedDescending !== undefined ? true : undefined,
 		isSortedDescending: isSortedDescending
 	}
 )
@@ -81,7 +77,7 @@ const buildColumn = (name: string, minWidth: number, maxWidth?: number, onRender
 const buildColumns = (projects: IProject[]) => [
 	buildColumn('Project', 100, 300, (e: IItem) => (
 			<Link href={"/projects/" + e.task.projectId}>
-				{projects.find(p => p.id === e.task.projectId)?.title ?? "N/A"}
+				{projects.find(p => p.projectId === e.task.projectId)?.title ?? "N/A"}
 			</Link>)
 	),
 	buildColumn('Task', 200, undefined, (e: IItem) => e.task.taskId + " - " + e.task.title),

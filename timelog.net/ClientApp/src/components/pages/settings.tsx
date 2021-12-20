@@ -1,10 +1,14 @@
-import React from "react";
-import { Text, Stack, Separator, Link, getTheme, ActionButton, MessageBar, MessageBarType, IconButton, Icon } from '@fluentui/react'
-import { useBoolean } from '@fluentui/react-hooks/lib/useBoolean'
+import React from 'react';
+
+import {
+    ActionButton, getTheme, Icon, Link, MessageBar, MessageBarType, Separator, Stack, Text
+} from '@fluentui/react';
+import { useBoolean } from '@fluentui/react-hooks/lib/useBoolean';
+
 //import { AddProjectPanel } from "../components/settings/addProjectPanel";
 //import { AddProject, CloseProject, GetProjects } from "../connectors";
-import { GetProjects, IProject } from "./project"
-import { Outlet } from "react-router-dom"
+import { GetProjects, IProject } from './project';
+
 //import Context from "../context";
 
 const theme = getTheme()
@@ -68,18 +72,17 @@ export const Settings = () => {
 						<ActionButton iconProps={{ iconName: 'Add' }}
 							text="Add Project" onClick={toggleShowPanel} />
 						{projects.map((p) => (
-							<Stack horizontal tokens={{ childrenGap: theme.spacing.s2 }} key={p.id}>
+							<Stack horizontal tokens={{ childrenGap: theme.spacing.s2 }} key={p.projectId}>
 								<Link title="Close Project"
 									/*onClick={() => onCloseProject(p)}*/>
 									<Icon iconName="Cancel" />
 								</Link>
 								<Link
-									href={"/settings/project/" + p.id}>
+									href={"/settings/project/" + p.projectId}>
 									{p.title}
 								</Link>
 							</Stack>
 						))}
-						<Outlet />
 					</Stack>
 				</Stack.Item>
 			</Stack>

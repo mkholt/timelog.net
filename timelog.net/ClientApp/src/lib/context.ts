@@ -1,4 +1,4 @@
-import { createContext } from "react"
+/*import { createContext } from "react"
 import { IContext } from "./IContext"
 
 export const DefaultContext = {
@@ -10,4 +10,6 @@ export const DefaultContext = {
 const Context = createContext<IContext>(DefaultContext)
 
 export const ContextProvider = Context.Provider
-export default Context
+export default Context*/
+
+export {}
