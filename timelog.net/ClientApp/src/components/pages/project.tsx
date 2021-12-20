@@ -114,11 +114,11 @@ export const Project = () => {
 }
 
 export const GetProjects = async () => {
-	const response = await fetch('project')
+	const response = await fetch('/project')
 	return await response.json() as IProject[]
 }
 
 export const GetProject = async (projectId: string): Promise<IProject> => {
-	const response = await fetch('project/' + projectId)
+	const response = await fetch('/project/' + projectId)
 	return await response.json() as IProject
 }
