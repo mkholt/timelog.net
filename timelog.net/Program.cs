@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using timelog.net;
 using timelog.net.Data;
@@ -27,6 +28,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add Repositories
 builder.Services.AddScoped<IRepository<Project>, ProjectRepository>();
+builder.Services.AddScoped<IRepository<ProjectTask>, TaskRepository>();
 
 var app = builder.Build();
 

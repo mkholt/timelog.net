@@ -33,7 +33,7 @@ public class ProjectControllerTests
         {
             ProjectId = 0,
             Title = "Project Title",
-            Tasks = new List<timelog.net.Models.Task>()
+            Tasks = new List<timelog.net.Models.ProjectTask>()
         };
         var repo = new Mock<IRepository<Project>>();
         repo.Setup(r => r.GetById(0))
@@ -52,7 +52,7 @@ public class ProjectControllerTests
         {
             ProjectId = 0,
             Title = "Project Title",
-            Tasks = new List<timelog.net.Models.Task>()
+            Tasks = new List<timelog.net.Models.ProjectTask>()
         };
         
         var repo = new Mock<IRepository<Project>>();

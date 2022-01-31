@@ -9,6 +9,6 @@ namespace timelog.net.Models
         
         public string? Title { get; set; }
 
-        public ICollection<Task> Tasks { get; set; } = new List<Task>();
+        public ICollection<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();
     }
 }

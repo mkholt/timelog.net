@@ -16,14 +16,14 @@ namespace timelog.net
 
         public DbSet<Project> Projects => Set<Project>();
 
-        public DbSet<Models.Task> Tasks => Set<Models.Task>();
+        public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
 
         public DbSet<Entry> Entries => Set<Entry>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Project>().ToTable("Project");
-            modelBuilder.Entity<Models.Task>().ToTable("Task");
+            modelBuilder.Entity<ProjectTask>().ToTable("Task");
             modelBuilder.Entity<Entry>().ToTable("Entry");
         }
     }

@@ -22,7 +22,7 @@ namespace timelog.net
             context.Projects.AddRange(projects);
             context.SaveChanges();
 
-            var tasks = new Task[]
+            var tasks = new ProjectTask[]
             {
                 new() {Title = "Task 1", ProjectId = 1, Url = "https://dev.azure.com/bhgprod/BHIT/_workitems/edit/199672", ExternalId = "199672", Icon = "AzureLogo"},
                 new() {Title = "Task 2", ProjectId = 1, Url = "https://dev.azure.com/bhgprod/BHIT/_workitems/edit/199672", ExternalId = "199672", Icon = "AzureLogo"},

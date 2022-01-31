@@ -1,36 +1,33 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using timelog.net.Data;
+using timelog.net.Models;
 
 namespace timelog.net.Controllers
 {
     [Route("[controller]")]
     public class TaskController : Controller
     {
-        private ProjectContext DbContext { get; }
+        private readonly IRepository<ProjectTask> _repository;
 
-        public TaskController(ProjectContext dbContext)
-        {
-            DbContext = dbContext;
-        }
+        public TaskController(IRepository<ProjectTask> repository) => _repository = repository;
 
         [HttpGet]
         [Route("{taskId:int}")]
-        public async Task<IActionResult> GetTask(int taskId)
-        {
-            var task = await DbContext.Tasks.FindAsync(taskId);
-            return Json(task);
-        }
+        public async Task<ProjectTask?> GetTask(int taskId) => await _repository.GetById(taskId);
 
         [HttpPatch]
         [Route("{taskId:int}")]
-        public async Task<IActionResult> PatchTask(int taskId, [FromBody] Models.Task task)
+        public Task<ProjectTask> PatchTask(int taskId, [FromBody] ProjectTask projectTask)
         {
-            task.TaskId = taskId;
+            throw new NotImplementedException();
+            /*task.TaskId = taskId;
             
             DbContext.Tasks.Attach(task);
             DbContext.Entry(task).Property(p => p.Title).IsModified = true;
             await DbContext.SaveChangesAsync();
-            return Ok();
+            return await GetTask(taskId);*/
         }
     }
 }
