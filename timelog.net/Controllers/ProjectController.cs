@@ -1,7 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using timelog.net.Data;
+using timelog.net.Models;
 
 namespace timelog.net.Controllers
 {
@@ -9,31 +10,15 @@ namespace timelog.net.Controllers
     [Route("[controller]")]
     public class ProjectController : Controller
     {
-        private ProjectContext DbContext { get; }
+        private readonly IRepository<Project> _repository;
 
-        public ProjectController(ProjectContext dbContext)
-        {
-            DbContext = dbContext;
-        }
+        public ProjectController(IRepository<Project> repository) => _repository = repository;
 
         [HttpGet]
-        public async Task<IActionResult> GetProjects()
-        {
-            return Json(await DbContext.Projects.ToListAsync());
-        }
+        public async Task<IEnumerable<Project>> GetProjects() => await _repository.GetAll();
 
         [HttpGet]
         [Route("{projectId:int}")]
-        public async Task<IActionResult> GetProject(int projectId)
-        {
-            var project = await DbContext.Projects
-                .Where(p => p.ProjectId == projectId)
-                .Include(p => p.Tasks)
-                .FirstOrDefaultAsync();
-
-            if (project is null) return NotFound();
-            
-            return Json(project);
-        }
+        public async Task<Project?> GetProject(int projectId) => await _repository.GetById(projectId);
     }
 }

@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using timelog.net;
+using timelog.net.Data;
+using timelog.net.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,9 @@ builder.Services.AddDbContext<ProjectContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("ProjectContextSQLite")));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Add Repositories
+builder.Services.AddScoped<IRepository<Project>, ProjectRepository>();
 
 var app = builder.Build();
 
