@@ -32,6 +32,7 @@
     <Content Include="ClientApp\src\tsconfig.json" />
     <None Remove="$(SpaRoot)**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
+    <None Remove="TimeLog.db" />
   </ItemGroup>
 
   <ItemGroup>
