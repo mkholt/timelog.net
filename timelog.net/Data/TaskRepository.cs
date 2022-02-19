@@ -17,21 +17,23 @@ public class TaskRepository : IRepository<ProjectTask>
 
     public async Task<IEnumerable<ProjectTask>> GetAll() => await _context.Tasks.ToListAsync();
 
-    public async Task Add(ProjectTask entry) => await _context.Tasks.AddAsync(entry);
+    public async Task<ProjectTask> Add(ProjectTask entry)
+    {
+        var task = await _context.Tasks.AddAsync(entry);
+        await _context.SaveChangesAsync();
+        return task.Entity;
+    }
 
-    public Task Update(ProjectTask newEntry)
+    public Task<bool> Update(int taskId, ProjectTask newEntry)
     {
         throw new System.NotImplementedException();
     }
 
-    public Task Remove(ProjectTask entry) => Task.FromResult(_context.Tasks.Remove(entry));
-
-    public async Task Remove(int id)
+    public async Task<bool> Remove(int id)
     {
         var entry = await _context.Tasks.FindAsync(id);
-        if (entry is null) return;
-        await Remove(entry);
+        if (entry is null) return false;
+        _context.Tasks.Remove(entry);
+        return await _context.SaveChangesAsync() > 0;
     }
-
-    public async Task SaveChanges() => await _context.SaveChangesAsync();
 }

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using timelog.net.Models;
-using Task = System.Threading.Tasks.Task;
 
 namespace timelog.net.Data;
 
@@ -21,21 +20,23 @@ public class ProjectRepository : IRepository<Project>
 
     public async Task<IEnumerable<Project>> GetAll() => await _context.Projects.ToListAsync();
 
-    public async Task Add(Project entry) => await _context.Projects.AddAsync(entry);
+    public async Task<Project> Add(Project entry)
+    {
+        var project = await _context.Projects.AddAsync(entry);
+        await _context.SaveChangesAsync();
+        return project.Entity;
+    }
 
-    public Task Update(Project newEntry)
+    public Task<bool> Update(int projectId, Project newEntry)
     {
         throw new System.NotImplementedException();
     }
 
-    public Task Remove(Project entry) => Task.FromResult(_context.Projects.Remove(entry));
-
-    public async Task Remove(int id)
+    public async Task<bool> Remove(int id)
     {
         var entry = await _context.Projects.FindAsync(id);
-        if (entry is null) return;
-        await Remove(entry);
+        if (entry is null) return false;
+        _context.Projects.Remove(entry);
+        return await _context.SaveChangesAsync() > 0;
     }
-
-    public async Task SaveChanges() => await _context.SaveChangesAsync();
 }

@@ -23,7 +23,7 @@ namespace timelog.net
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Project>().ToTable("Project");
-            modelBuilder.Entity<ProjectTask>().ToTable("Task");
+            modelBuilder.Entity<ProjectTask>().ToTable("Task").HasKey(t => t.TaskId);
             modelBuilder.Entity<Entry>().ToTable("Entry");
         }
     }

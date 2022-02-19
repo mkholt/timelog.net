@@ -15,8 +15,8 @@ namespace timelog.net
 
             var projects = new Project[]
             {
-                new() {Title = "Project 1"},
-                new() {Title = "Project 2"}
+                new() {Title = "Project 1", Url = "https://google.com", ExternalId = "Project1" },
+                new() {Title = "Project 2", Url = "https://github.com", ExternalId = "mkholt/timelog.net" }
             };
 
             context.Projects.AddRange(projects);
@@ -38,27 +38,35 @@ namespace timelog.net
             {
                 new()
                 {
-                    TaskId = 1, StartTime = DateTime.UtcNow.AddDays(-1),
+                    TaskId = 1,
+                    StartTime = DateTime.UtcNow.AddDays(-1),
+                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2),
+                    Note = "This is a note"
+                },
+                new()
+                {
+                    TaskId = 2,
+                    StartTime = DateTime.UtcNow.AddDays(-1),
+                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2),
+                    Note = "This note\nHas multiple lines"
+                },
+                new()
+                {
+                    TaskId = 3,
+                    StartTime = DateTime.UtcNow.AddDays(-1),
+                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2),
+                    Note = "This note too\r\nHas multiple lines"
+                },
+                new()
+                {
+                    TaskId = 4,
+                    StartTime = DateTime.UtcNow.AddDays(-1),
                     EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2)
                 },
                 new()
                 {
-                    TaskId = 2, StartTime = DateTime.UtcNow.AddDays(-1),
-                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2)
-                },
-                new()
-                {
-                    TaskId = 3, StartTime = DateTime.UtcNow.AddDays(-1),
-                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2)
-                },
-                new()
-                {
-                    TaskId = 4, StartTime = DateTime.UtcNow.AddDays(-1),
-                    EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2)
-                },
-                new()
-                {
-                    TaskId = 5, StartTime = DateTime.UtcNow.AddDays(-1),
+                    TaskId = 5,
+                    StartTime = DateTime.UtcNow.AddDays(-1),
                     EndTime = DateTime.UtcNow.AddDays(-1).AddHours(2)
                 },
             };

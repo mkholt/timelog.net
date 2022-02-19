@@ -9,10 +9,9 @@ public interface IRepository<TType>
 
     Task<IEnumerable<TType>> GetAll();
 
-    Task Add(TType entry);
-    Task Update(TType newEntry);
-    Task Remove(TType entry);
-    Task Remove(int id);
-
-    Task SaveChanges();
+    Task<TType> Add(TType entry);
+    
+    Task<bool> Update(int id, TType newEntry);
+    
+    Task<bool> Remove(int id);
 }
