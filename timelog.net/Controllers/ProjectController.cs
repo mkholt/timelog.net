@@ -8,6 +8,8 @@ namespace timelog.net.Controllers
     [Route("[controller]")]
     public class ProjectController : BaseController<Project>
     {
+        protected override string EntityName => "Project";
+
         public ProjectController(IRepository<Project> repository) : base(repository)
         {
         }

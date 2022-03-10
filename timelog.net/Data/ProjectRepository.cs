@@ -12,9 +12,9 @@ public class ProjectRepository : IRepository<Project>
     
     public ProjectRepository(ProjectContext context) => _context = context;
 
-    public async Task<Project?> GetById(int id) =>
+    public async Task<Project?> GetById(int entityId) =>
         await _context.Projects
-            .Where(p => p.ProjectId == id)
+            .Where(p => p.ProjectId == entityId)
             .Include(p => p.Tasks)
             .FirstOrDefaultAsync();
 
@@ -32,9 +32,9 @@ public class ProjectRepository : IRepository<Project>
         throw new System.NotImplementedException();
     }
 
-    public async Task<bool> Remove(int id)
+    public async Task<bool> Remove(int entityId)
     {
-        var entry = await _context.Projects.FindAsync(id);
+        var entry = await _context.Projects.FindAsync(entityId);
         if (entry is null) return false;
         _context.Projects.Remove(entry);
         return await _context.SaveChangesAsync() > 0;

@@ -12,12 +12,12 @@ public class TaskRepository : IRepository<ProjectTask>
 
     public TaskRepository(ProjectContext context) => _context = context;
 
-    public Task<ProjectTask?> GetById(int id) =>
-        _context.Tasks.Where(t => t.TaskId == id).Include(t => t.Entries).FirstOrDefaultAsync();
+    public Task<ProjectTask?> GetById(int entityId) =>
+        _context.Tasks.Where(t => t.TaskId == entityId).Include(t => t.Entries).FirstOrDefaultAsync();
 
     public async Task<IEnumerable<ProjectTask>> GetAll() => await _context.Tasks.ToListAsync();
 
-    public async Task<ProjectTask> Add(ProjectTask entry)
+    public async Task<ProjectTask?> Add(ProjectTask entry)
     {
         var task = await _context.Tasks.AddAsync(entry);
         await _context.SaveChangesAsync();
@@ -29,9 +29,9 @@ public class TaskRepository : IRepository<ProjectTask>
         throw new System.NotImplementedException();
     }
 
-    public async Task<bool> Remove(int id)
+    public async Task<bool> Remove(int entityId)
     {
-        var entry = await _context.Tasks.FindAsync(id);
+        var entry = await _context.Tasks.FindAsync(entityId);
         if (entry is null) return false;
         _context.Tasks.Remove(entry);
         return await _context.SaveChangesAsync() > 0;

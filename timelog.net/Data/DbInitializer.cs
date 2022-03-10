@@ -34,7 +34,7 @@ namespace timelog.net
             context.Tasks.AddRange(tasks);
             context.SaveChanges();
 
-            var entries = new Entry[]
+            var entries = new Entry?[]
             {
                 new()
                 {

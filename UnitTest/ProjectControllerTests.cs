@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json;
@@ -35,7 +34,7 @@ public class ProjectControllerTests
     [Fact]
     public async Task CanGetProject()
     {
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var repo = new Mock<IRepository<Project>>();
         repo.Setup(r => r.GetById(0))
             .ReturnsAsync(projectIn);
@@ -51,18 +50,17 @@ public class ProjectControllerTests
     [Fact]
     public async Task GetProjectReturns404OnMissingProject()
     {
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var repo = new Mock<IRepository<Project>>();
         repo.Setup(r => r.GetById(0))
             .ReturnsAsync(projectIn);
         
         var ctrl = new ProjectController(repo.Object);
 
-        const int nonExistentId = 999;
-        var result = await ctrl.Get(nonExistentId);
+        var result = await ctrl.Get(999);
         var actionResult = Assert.IsType<ActionResult<Project>>(result);
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-        Assert.Equal(nonExistentId, notFoundResult.Value);
+        Assert.Equal("Project not found: 999", notFoundResult.Value);
     }
 
     [Fact]
@@ -74,11 +72,10 @@ public class ProjectControllerTests
         
         var ctrl = new ProjectController(repo.Object);
 
-        const int nonExistentId = 999;
-        var returnResult = await ctrl.Get(nonExistentId);
+        var returnResult = await ctrl.Get(999);
         var actionResult = Assert.IsType<ActionResult<Project>>(returnResult);
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-        Assert.Equal(nonExistentId, notFoundResult.Value);
+        Assert.Equal("Project not found: 999", notFoundResult.Value);
     }
 
     [Fact]
@@ -97,13 +94,13 @@ public class ProjectControllerTests
 
         var ctrl = new ProjectController(repo.Object);
 
-        var projectIn = CreateProject(false);
+        var projectIn = Data.Project(false);
         var returnResult = await ctrl.Create(projectIn);
 
         var actionResult = Assert.IsType<ActionResult<Project>>(returnResult);
         var projectOut = Assert.IsType<Project>(actionResult.Value);
 
-        var expOut = CreateProject();
+        var expOut = Data.Project();
         expOut.ProjectId = 1;
         var expOutStr = JsonConvert.SerializeObject(expOut);
         var actOutStr = JsonConvert.SerializeObject(projectOut);
@@ -119,25 +116,43 @@ public class ProjectControllerTests
         
         var ctrl = new ProjectController(repo.Object);
 
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var returnResult = await ctrl.Update(projectIn.ProjectId, projectIn);
         Assert.IsType<OkResult>(returnResult);
         repo.Verify(r => r.Update(projectIn.ProjectId, projectIn), Times.Once);
     }
     
     [Fact]
-    public async Task UpdateReturns404OnFail()
+    public async Task UpdateReturns500OnFail()
+    {
+        var repo = new Mock<IRepository<Project>>();
+        repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<Project>()))
+            .ThrowsAsync(new Exception());
+        
+        var ctrl = new ProjectController(repo.Object);
+
+        var projectIn = Data.Project();
+        var returnResult = await ctrl.Update(projectIn.ProjectId, projectIn);
+        var faultRes = Assert.IsType<ObjectResult>(returnResult);
+        var faultMessage = Assert.IsType<string>(faultRes.Value);
+        Assert.Equal(500, faultRes.StatusCode);
+        Assert.Equal("An error occurred updating the Project: " + projectIn.ProjectId, faultMessage);
+        repo.Verify(r => r.Update(projectIn.ProjectId, projectIn), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateReturns404OnNotFound()
     {
         var repo = new Mock<IRepository<Project>>();
         repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<Project>()))
             .ReturnsAsync(false);
-        
+
         var ctrl = new ProjectController(repo.Object);
 
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var returnResult = await ctrl.Update(projectIn.ProjectId, projectIn);
         var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
-        Assert.Equal(projectIn.ProjectId, notFoundObjectResult.Value);
+        Assert.Equal("Project not found: " + projectIn.ProjectId, notFoundObjectResult.Value);
         repo.Verify(r => r.Update(projectIn.ProjectId, projectIn), Times.Once);
     }
     
@@ -150,9 +165,9 @@ public class ProjectControllerTests
         
         var ctrl = new ProjectController(repo.Object);
 
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var returnResult = await ctrl.Delete(projectIn.ProjectId);
-        Assert.IsType<OkResult>(returnResult);
+        Assert.IsType<NoContentResult>(returnResult);
         repo.Verify(r => r.Remove(projectIn.ProjectId), Times.Once);
     }
     
@@ -165,25 +180,12 @@ public class ProjectControllerTests
         
         var ctrl = new ProjectController(repo.Object);
 
-        var projectIn = CreateProject();
+        var projectIn = Data.Project();
         var returnResult = await ctrl.Delete(projectIn.ProjectId);
         var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
-        Assert.Equal(projectIn.ProjectId, notFoundObjectResult.Value);
+        Assert.Equal("Project not found: " + projectIn.ProjectId, notFoundObjectResult.Value);
         repo.Verify(r => r.Remove(projectIn.ProjectId), Times.Once);
     }
     
-    private static Project CreateProject(bool setId = true)
-    {
-        var p = new Project
-        {
-            Title = "Project Title",
-            Url = "https://github.com/mkholt/timelog.net",
-            ExternalId = "1234",
-            Tasks = new List<ProjectTask>()
-        };
-
-        if (setId) p.ProjectId = 0;
-        
-        return p;
-    }
+    
 }

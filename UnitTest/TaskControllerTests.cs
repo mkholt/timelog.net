@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -16,11 +18,8 @@ public class TaskControllerTests
     [Fact]
     public async Task CanGetEmptyProjectTaskList()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.GetAll())
-            .ReturnsAsync(Enumerable.Empty<ProjectTask>());
-
-        var ctrl = new TaskController(repo.Object);
+        var repo = Repository.Task((r => r.GetAll(), Enumerable.Empty<ProjectTask>()));
+        var ctrl = Controllers.Task(repo);
 
         var projects = await ctrl.GetAll();
         
@@ -33,12 +32,10 @@ public class TaskControllerTests
     [Fact]
     public async Task CanGetProjectTask()
     {
-        var projectIn = CreateProjectTask();
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.GetById(0))
-            .ReturnsAsync(projectIn);
+        var projectIn = Data.Task();
+        var repo = Repository.Task((r => r.GetById(0), projectIn));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
         var result = await ctrl.Get(0);
         var actionResult = Assert.IsType<ActionResult<ProjectTask>>(result);
@@ -49,62 +46,54 @@ public class TaskControllerTests
     [Fact]
     public async Task GetProjectTaskReturns404OnMissingProjectTask()
     {
-        var taskIn = CreateProjectTask();
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.GetById(taskIn.TaskId))
-            .ReturnsAsync(taskIn);
+        var taskIn = Data.Task();
+        var repo = Repository.Task((r => r.GetById(taskIn.TaskId), taskIn));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        const int nonExistentId = 999;
-        var result = await ctrl.Get(nonExistentId);
+        var result = await ctrl.Get(999);
         var actionResult = Assert.IsType<ActionResult<ProjectTask>>(result);
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-        Assert.Equal(nonExistentId, notFoundResult.Value);
+        Assert.Equal("Task not found: 999", notFoundResult.Value);
     }
 
     [Fact]
     public async Task GetProjectTaskReturns404OnNoProjectTasks()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.GetById(It.IsAny<int>()))
-            .ReturnsAsync((ProjectTask?) null);
+        var repo = Repository.Task((r => r.GetById(It.IsAny<int>()), (ProjectTask?) null));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        const int nonExistentId = 999;
-        var returnResult = await ctrl.Get(nonExistentId);
+        var returnResult = await ctrl.Get(999);
         var actionResult = Assert.IsType<ActionResult<ProjectTask>>(returnResult);
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-        Assert.Equal(nonExistentId, notFoundResult.Value);
+        Assert.Equal("Task not found: 999", notFoundResult.Value);
     }
 
     [Fact]
     public async Task CanCreateProjectTask()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.Add(It.IsAny<ProjectTask>()))
-            .ReturnsAsync((ProjectTask p) => new ProjectTask
-            {
-                TaskId = 1,
-                Title = p.Title,
-                Entries = new List<Entry>(p.Entries),
-                Icon = p.Icon,
-                ProjectId = p.ProjectId,
-                ExternalId = p.ExternalId,
-                Url = p.Url
-            });
+        var repo = Repository.Task((r => r.Add(It.IsAny<ProjectTask>()), (ProjectTask p) => new ProjectTask
+        {
+            TaskId = 1,
+            Title = p.Title,
+            Entries = new List<Entry>(p.Entries),
+            Icon = p.Icon,
+            ProjectId = p.ProjectId,
+            ExternalId = p.ExternalId,
+            Url = p.Url
+        }));
 
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        var taskIn = CreateProjectTask(false);
+        var taskIn = Data.Task(setId: false);
         taskIn.Project = null;
         var returnResult = await ctrl.Create(taskIn);
 
         var actionResult = Assert.IsType<ActionResult<ProjectTask>>(returnResult);
         var projectOut = Assert.IsType<ProjectTask>(actionResult.Value);
 
-        var expOut = CreateProjectTask();
+        var expOut = Data.Task();
         expOut.TaskId = 1;
         expOut.Project = null;
         var expOutStr = JsonConvert.SerializeObject(expOut);
@@ -115,84 +104,71 @@ public class TaskControllerTests
     [Fact]
     public async Task CanUpdateProjectTask()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()))
-            .ReturnsAsync(true);
+        var repo = Repository.Task((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), true));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        var projectIn = CreateProjectTask();
+        var projectIn = Data.Task();
         var returnResult = await ctrl.Update(projectIn.TaskId, projectIn);
         Assert.IsType<OkResult>(returnResult);
         repo.Verify(r => r.Update(projectIn.TaskId, projectIn), Times.Once);
     }
     
     [Fact]
-    public async Task UpdateReturns404OnFail()
+    public async Task UpdateReturns500OnFail()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()))
-            .ReturnsAsync(false);
+        var repo = Repository.Task();
+        repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>())).ThrowsAsync(new Exception());
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        var projectIn = CreateProjectTask();
+        var projectIn = Data.Task();
         var returnResult = await ctrl.Update(projectIn.TaskId, projectIn);
-        var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
-        Assert.Equal(projectIn.TaskId, notFoundObjectResult.Value);
+        var faultResult = Assert.IsType<ObjectResult>(returnResult);
+        var faultMessage = Assert.IsType<string>(faultResult.Value);
+        Assert.Equal(500, faultResult.StatusCode);
+        Assert.Equal("An error occurred updating the Task: " + projectIn.ProjectId, faultMessage);
         repo.Verify(r => r.Update(projectIn.TaskId, projectIn), Times.Once);
     }
-    
+
+    [Fact]
+    public async Task UpdateReturns404OnNoSuchTask()
+    {
+        var repo = Repository.Task((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), false));
+        var ctrl = Controllers.Task(repo);
+
+        var projectIn = Data.Task(1);
+        var returnResult = await ctrl.Update(1, projectIn);
+
+        var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
+        Assert.Equal("Task not found: 1", notFoundObjectResult.Value);
+        repo.Verify(r => r.Update(1, projectIn), Times.Once);
+    }
+
     [Fact]
     public async Task CanDeleteProjectTask()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.Remove(It.IsAny<int>()))
-            .ReturnsAsync(true);
+        var repo = Repository.Task((r => r.Remove(It.IsAny<int>()), true));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        var projectIn = CreateProjectTask();
+        var projectIn = Data.Task();
         var returnResult = await ctrl.Delete(projectIn.TaskId);
-        Assert.IsType<OkResult>(returnResult);
+        Assert.IsType<NoContentResult>(returnResult);
         repo.Verify(r => r.Remove(projectIn.TaskId), Times.Once);
     }
     
     [Fact]
     public async Task DeleteReturns404OnFail()
     {
-        var repo = new Mock<IRepository<ProjectTask>>();
-        repo.Setup(r => r.Remove(It.IsAny<int>()))
-            .ReturnsAsync(false);
+        var repo = Repository.Task((r => r.Remove(It.IsAny<int>()), false));
         
-        var ctrl = new TaskController(repo.Object);
+        var ctrl = Controllers.Task(repo);
 
-        var projectIn = CreateProjectTask();
-        var returnResult = await ctrl.Delete(projectIn.TaskId);
+        var taskIn = Data.Task();
+        var returnResult = await ctrl.Delete(taskIn.TaskId);
         var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
-        Assert.Equal(projectIn.TaskId, notFoundObjectResult.Value);
-        repo.Verify(r => r.Remove(projectIn.TaskId), Times.Once);
-    }
-    
-    private static ProjectTask CreateProjectTask(bool setId = true)
-    {
-        var p = new ProjectTask
-        {
-            ProjectId = 0,
-            Project = new Project
-            {
-                ProjectId = 0,
-                Title = "Project Title",
-            },
-            Title = "Task Title",
-            Entries = new List<Entry>(),
-            Icon = "Icon name",
-            Url = "Url",
-            ExternalId = "External ID",
-        };
-
-        if (setId) p.TaskId = 0;
-        
-        return p;
+        Assert.Equal("Task not found: " + taskIn.TaskId, notFoundObjectResult.Value);
+        repo.Verify(r => r.Remove(taskIn.TaskId), Times.Once);
     }
 }
