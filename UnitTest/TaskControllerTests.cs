@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json;
-using timelog.net.Controllers;
-using timelog.net.Data;
 using timelog.net.Models;
 using Xunit;
 
@@ -18,7 +15,7 @@ public class TaskControllerTests
     [Fact]
     public async Task CanGetEmptyProjectTaskList()
     {
-        var repo = Repository.Task((r => r.GetAll(), Enumerable.Empty<ProjectTask>()));
+        var repo = Repository.Repo<ProjectTask, IEnumerable<ProjectTask>>((r => r.GetAll(), Enumerable.Empty<ProjectTask>()));
         var ctrl = Controllers.Task(repo);
 
         var projects = await ctrl.GetAll();
@@ -33,7 +30,7 @@ public class TaskControllerTests
     public async Task CanGetProjectTask()
     {
         var projectIn = Data.Task();
-        var repo = Repository.Task((r => r.GetById(0), projectIn));
+        var repo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(0), projectIn));
         
         var ctrl = Controllers.Task(repo);
 
@@ -47,7 +44,7 @@ public class TaskControllerTests
     public async Task GetProjectTaskReturns404OnMissingProjectTask()
     {
         var taskIn = Data.Task();
-        var repo = Repository.Task((r => r.GetById(taskIn.TaskId), taskIn));
+        var repo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(taskIn.TaskId), taskIn));
         
         var ctrl = Controllers.Task(repo);
 
@@ -60,7 +57,7 @@ public class TaskControllerTests
     [Fact]
     public async Task GetProjectTaskReturns404OnNoProjectTasks()
     {
-        var repo = Repository.Task((r => r.GetById(It.IsAny<int>()), (ProjectTask?) null));
+        var repo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(It.IsAny<int>()), (ProjectTask?) null));
         
         var ctrl = Controllers.Task(repo);
 
@@ -73,7 +70,7 @@ public class TaskControllerTests
     [Fact]
     public async Task CanCreateProjectTask()
     {
-        var repo = Repository.Task((r => r.Add(It.IsAny<ProjectTask>()), (ProjectTask p) => new ProjectTask
+        var repo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.Add(It.IsAny<ProjectTask>()), (ProjectTask p) => new ProjectTask
         {
             TaskId = 1,
             Title = p.Title,
@@ -104,7 +101,7 @@ public class TaskControllerTests
     [Fact]
     public async Task CanUpdateProjectTask()
     {
-        var repo = Repository.Task((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), true));
+        var repo = Repository.Repo<ProjectTask, bool>((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), true));
         
         var ctrl = Controllers.Task(repo);
 
@@ -117,7 +114,7 @@ public class TaskControllerTests
     [Fact]
     public async Task UpdateReturns500OnFail()
     {
-        var repo = Repository.Task();
+        var repo = Repository.Repo<ProjectTask>();
         repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>())).ThrowsAsync(new Exception());
         
         var ctrl = Controllers.Task(repo);
@@ -134,7 +131,7 @@ public class TaskControllerTests
     [Fact]
     public async Task UpdateReturns404OnNoSuchTask()
     {
-        var repo = Repository.Task((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), false));
+        var repo = Repository.Repo<ProjectTask, bool>((r => r.Update(It.IsAny<int>(), It.IsAny<ProjectTask>()), false));
         var ctrl = Controllers.Task(repo);
 
         var projectIn = Data.Task(1);
@@ -148,7 +145,7 @@ public class TaskControllerTests
     [Fact]
     public async Task CanDeleteProjectTask()
     {
-        var repo = Repository.Task((r => r.Remove(It.IsAny<int>()), true));
+        var repo = Repository.Repo<ProjectTask, bool>((r => r.Remove(It.IsAny<int>()), true));
         
         var ctrl = Controllers.Task(repo);
 
@@ -161,7 +158,7 @@ public class TaskControllerTests
     [Fact]
     public async Task DeleteReturns404OnFail()
     {
-        var repo = Repository.Task((r => r.Remove(It.IsAny<int>()), false));
+        var repo = Repository.Repo<ProjectTask, bool>((r => r.Remove(It.IsAny<int>()), false));
         
         var ctrl = Controllers.Task(repo);
 

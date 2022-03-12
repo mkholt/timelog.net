@@ -46,8 +46,9 @@ namespace UnitTest
             return p;
         }
 
-        public static Entry Entry(ProjectTask task, int? entryId = null) =>
-            new()
+        public static Entry Entry(ProjectTask task, int? entryId = null)
+        {
+            var entry = new Entry
             {
                 EntryId = entryId ?? 1,
                 Task = task,
@@ -56,5 +57,10 @@ namespace UnitTest
                 StartTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
                 EndTime = DateTime.UtcNow,
             };
+
+            task.Entries.Add(entry);
+
+            return entry;
+        }
     }
 }

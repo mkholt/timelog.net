@@ -30,10 +30,11 @@ namespace UnitTest
             var task = Data.Task();
             task.Entries.Add(Data.Entry(task));
 
-            var taskRepo = Repository.Task((r => r.GetById(task.TaskId), task));
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(task.TaskId), task));
             var ctrl = Controllers.Entry(taskRepo: taskRepo);
+            ctrl.TaskId = task.TaskId;
 
-            var retVal = await ctrl.GetEntries(task.TaskId);
+            var retVal = await ctrl.GetAll();
             var entryResult = Assert.IsType<ActionResult<List<Entry>>>(retVal);
             var entryList = Assert.IsType<List<Entry>>(entryResult.Value);
             Assert.Equal(task.Entries, entryList);
@@ -42,10 +43,11 @@ namespace UnitTest
         [Fact]
         public async Task EntryListReturns404OnNoTask()
         {
-            var taskRepo = Repository.Task((r => r.GetById(It.IsAny<int>()), (ProjectTask?)null));
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(It.IsAny<int>()), (ProjectTask?)null));
             var ctrl = Controllers.Entry(taskRepo: taskRepo);
+            ctrl.TaskId = 999;
 
-            var retVal = await ctrl.GetEntries(999);
+            var retVal = await ctrl.GetAll();
             var entryResult = Assert.IsType<ActionResult<List<Entry>>>(retVal);
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(entryResult.Result);
             Assert.Equal("Task not found: 999", notFoundResult.Value);
@@ -54,11 +56,14 @@ namespace UnitTest
         [Fact]
         public async Task CanGetEntryById()
         {
-            var entry = Data.Entry(Data.Task());
-            var repo = Repository.Entry((r => r.GetById(entry.EntryId), entry));
-            var ctrl = Controllers.Entry(repo);
+            var task = Data.Task(1);
+            var entry = Data.Entry(task);
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(1), task));
+            var repo = Repository.Repo<Entry, Entry?>((r => r.GetById(entry.EntryId), entry));
+            var ctrl = Controllers.Entry(repo, taskRepo);
+            ctrl.TaskId = 1;
 
-            var retVal = await ctrl.GetEntry(0, 1);
+            var retVal = await ctrl.Get(1);
             var entryResult = Assert.IsType<ActionResult<Entry>>(retVal);
             var entryOut = Assert.IsType<Entry>(entryResult.Value);
             Assert.Equal(entry, entryOut);
@@ -67,46 +72,40 @@ namespace UnitTest
         [Fact]
         public async Task CanRemoveEntry()
         {
-            var repo = Repository.Entry(r => r.Remove(0, 1), true);
-            var ctrl = Controllers.Entry(repo);
+            var task = Data.Task(1);
+            var entry = Data.Entry(task);
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(1), task));
+            var repo = Repository.Repo<Entry, bool>((r => r.Remove(1), true));
+            var ctrl = Controllers.Entry(repo, taskRepo);
+            ctrl.TaskId = 1;
 
-            var retVal = await ctrl.RemoveEntry(0, 1);
+            var retVal = await ctrl.Delete(1);
             Assert.IsType<NoContentResult>(retVal);
-            repo.Verify(r => r.Remove(0, 1), Times.Once);
+            repo.Verify(r => r.Remove(1), Times.Once);
         }
 
         [Fact]
         public async Task Returns404IfEntryNotFoundForRemove()
-        {
-            var repo = Repository.Entry(r => r.Remove(0, 1), false);
-            var ctrl = Controllers.Entry(repo);
+{
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(1), Data.Task(1)));
+            var repo = Repository.Repo<Entry>();
+            var ctrl = Controllers.Entry(repo, taskRepo);
+            ctrl.TaskId = 1;
 
-            var retVal = await ctrl.RemoveEntry(0, 1);
+            var retVal = await ctrl.Delete(1);
             var notFoundRes = Assert.IsType<NotFoundObjectResult>(retVal);
-            Assert.Equal("Entry 1 not found on task 0", notFoundRes.Value);
-            repo.Verify(r => r.Remove(0, 1), Times.Once);
+            Assert.Equal("Entry 1 not found on task 1", notFoundRes.Value);
+            repo.Verify(r => r.Remove(It.IsAny<int>()), Times.Never);
         }
 
         [Fact]
         public async Task Returns404IfNoEntryById()
         {
-            var repo = Repository.Entry((r => r.GetById(It.IsAny<int>()), (Entry?)null));
-            var ctrl = Controllers.Entry(repo);
+            var taskRepo = Repository.Repo<ProjectTask, ProjectTask?>((r => r.GetById(0), Data.Task(0)));
+            var repo = Repository.Repo<Entry, Entry?>((r => r.GetById(It.IsAny<int>()), (Entry?)null));
+            var ctrl = Controllers.Entry(repo, taskRepo);
 
-            var retVal = await ctrl.GetEntry(0, 1);
-            var entryResult = Assert.IsType<ActionResult<Entry>>(retVal);
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(entryResult.Result);
-            Assert.Equal("Entry 1 not found on task 0", notFoundResult.Value);
-        }
-
-        [Fact]
-        public async Task Returns404IfEntryDoesNotMatchTask()
-        {
-            var entry = Data.Entry(Data.Task(1));
-            var repo = Repository.Entry((r => r.GetById(entry.EntryId), entry));
-            var ctrl = Controllers.Entry(repo);
-
-            var retVal = await ctrl.GetEntry(0, 1);
+            var retVal = await ctrl.Get(1);
             var entryResult = Assert.IsType<ActionResult<Entry>>(retVal);
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(entryResult.Result);
             Assert.Equal("Entry 1 not found on task 0", notFoundResult.Value);
@@ -116,11 +115,11 @@ namespace UnitTest
         public async Task CanGetActiveEntry()
         {
             var entry = Data.Entry(Data.Task());
-            var repo = Repository.Entry(r => r.GetActive(1), entry);
+            var repo = Repository.Repo<Entry>();
 
             var ctrl = Controllers.Entry(repo);
 
-            var retVal = await ctrl.GetActiveEntry(1);
+            var retVal = await ctrl.GetActiveEntry();
             var entryResult = Assert.IsType<ActionResult<Entry>>(retVal);
             var found = Assert.IsType<Entry>(entryResult.Value);
             Assert.Equal(entry, found);
@@ -130,27 +129,25 @@ namespace UnitTest
         public async Task ActiveListReturns204OnNoActive()
         {
             var task = Data.Task();
-            var repo = Repository.Entry(r => r.GetActive(task.TaskId), null);
+            var repo = Repository.Repo<Entry>();
 
             var ctrl = Controllers.Entry(repo);
 
-            var retVal = await ctrl.GetActiveEntry(task.TaskId);
+            var retVal = await ctrl.GetActiveEntry();
             var entryResult = Assert.IsType<ActionResult<Entry?>>(retVal);
             Assert.IsType<NoContentResult>(entryResult.Result);
-            repo.Verify(r => r.GetActive(task.TaskId));
         }
 
         [Fact]
         public async Task ActiveListReturns404OnNoSuchTask()
         {
-            var repo = Repository.Entry(r => r.GetActive(It.IsAny<int>()), new Entry());
+            var repo = Repository.Repo<Entry>();
             var ctrl = Controllers.Entry(repo);
 
-            var retVal = await ctrl.GetActiveEntry(999);
+            var retVal = await ctrl.GetActiveEntry();
             var entryResult = Assert.IsType<ActionResult<Entry>>(retVal);
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(entryResult.Result);
             Assert.Equal("Task not found: 999", notFoundResult.Value);
-            repo.Verify(r => r.GetActive(999));
         }
 
         [Fact]
@@ -158,9 +155,7 @@ namespace UnitTest
         {
             var task = Data.Task();
             var entry = Data.Entry(task);
-            var repo = Repository.Entry((r => r.Add(It.IsAny<Entry>()), entry));
-            repo.Setup(r => r.GetActive(It.IsAny<int>()))
-                .ReturnsAsync((Entry?)null);
+            var repo = Repository.Repo<Entry, Entry?>((r => r.Add(It.IsAny<Entry>()), entry));
 
             var ctrl = Controllers.Entry(repo);
 
@@ -176,9 +171,7 @@ namespace UnitTest
         {
             var task = Data.Task();
             var entry = Data.Entry(task);
-            var repo = Repository.Entry((r => r.Add(It.IsAny<Entry>()), entry));
-            repo.Setup(r => r.GetActive(It.IsAny<int>()))
-                .ReturnsAsync((Entry?)null);
+            var repo = Repository.Repo<Entry, Entry?>((r => r.Add(It.IsAny<Entry>()), entry));
 
             var ctrl = Controllers.Entry(repo);
 
@@ -194,7 +187,7 @@ namespace UnitTest
         {
             var task = Data.Task();
             var entry = Data.Entry(task);
-            var repo = Repository.Entry((r => r.GetActive(It.IsAny<int>()), entry));
+            var repo = Repository.Repo<Entry>();
 
             var ctrl = Controllers.Entry(repo);
 
@@ -211,7 +204,7 @@ namespace UnitTest
         [Fact]
         public async Task Returns404OnStartIfNoTask()
         {
-            var repo = Repository.Entry((r => r.GetActive(It.IsAny<int>()), new Entry()));
+            var repo = Repository.Repo<Entry>();
 
             var ctrl = Controllers.Entry(repo);
 
@@ -226,8 +219,7 @@ namespace UnitTest
         public async Task CanStopEntry()
         {
             var entryIn = Data.Entry(Data.Task(1), 2);
-            var repo = Repository.Entry(r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), true);
-            repo.Setup(r => r.GetActive(It.IsAny<int>())).ReturnsAsync(entryIn);
+            var repo = Repository.Repo<Entry, bool>((r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), true));
             var ctrl = Controllers.Entry(repo);
 
             var entryRet = await ctrl.StopTask(1, "This is a note");
@@ -249,8 +241,7 @@ namespace UnitTest
         public async Task ReturnsError500OnStopIfUpdateError()
         {
             var entryIn = Data.Entry(Data.Task(1));
-            var repo = Repository.Entry(r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), false);
-            repo.Setup(r => r.GetActive(It.IsAny<int>())).ReturnsAsync(entryIn);
+            var repo = Repository.Repo<Entry, bool>((r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), false));
             var ctrl = Controllers.Entry(repo);
 
             var stopRes = await ctrl.StopTask(1, "This is a note");
@@ -263,7 +254,7 @@ namespace UnitTest
         [Fact]
         public async Task ReturnsError409OnStopIfNotStarted()
         {
-            var repo = Repository.Entry(r => r.GetActive(It.IsAny<int>()), new Entry());
+            var repo = Repository.Repo<Entry>();
             var ctrl = Controllers.Entry(repo);
 
             var stopRes = await ctrl.StopTask(999, "This is a note");
@@ -276,7 +267,7 @@ namespace UnitTest
         [Fact]
         public async Task Returns404OnStopIfNoSuchTask()
         {
-            var repo = Repository.Entry(r => r.GetActive(It.IsAny<int>()), null);
+            var repo = Repository.Repo<Entry>();
             var ctrl = Controllers.Entry(repo);
 
             var stopRes = await ctrl.StopTask(999, "This is a note");
@@ -289,12 +280,12 @@ namespace UnitTest
         [Fact]
         public async Task CanUpdateEntry()
         {
-            var repo = Repository.Entry((r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), true));
+            var repo = Repository.Repo<Entry, bool>((r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), true));
 
             var ctrl = Controllers.Entry(repo);
 
             var entryIn = Data.Entry(Data.Task(1), 2);
-            var returnResult = await ctrl.UpdateEntry(1, 2, entryIn);
+            var returnResult = await ctrl.Update(2, entryIn);
             Assert.IsType<OkResult>(returnResult);
             repo.Verify(r => r.Update(2, entryIn), Times.Once);
         }
@@ -302,13 +293,13 @@ namespace UnitTest
         [Fact]
         public async Task UpdateReturns500OnUpdateError()
         {
-            var repo = Repository.Entry();
+            var repo = Repository.Repo<Entry>();
             repo.Setup(r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()))
                 .ThrowsAsync(new Exception());
             var ctrl = Controllers.Entry(repo);
 
             var entryIn = Data.Entry(Data.Task(1), 2);
-            var returnResult = await ctrl.UpdateEntry(1, 2, entryIn);
+            var returnResult = await ctrl.Update(2, entryIn);
             var statusResult = Assert.IsType<ObjectResult>(returnResult);
             var message = Assert.IsType<string>(statusResult.Value);
             Assert.Equal(500, statusResult.StatusCode);
@@ -319,11 +310,11 @@ namespace UnitTest
         [Fact]
         public async Task UpdateReturns404OnNoSuchTask()
         {
-            var repo = Repository.Entry();
+            var repo = Repository.Repo<Entry>();
             var ctrl = Controllers.Entry(repo);
 
             var entryIn = Data.Entry(Data.Task(1), 2);
-            var returnResult = await ctrl.UpdateEntry(1, 2, entryIn);
+            var returnResult = await ctrl.Update(2, entryIn);
             var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
             Assert.Equal("Task not found: 1", notFoundObjectResult.Value);
             repo.Verify(r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), Times.Never);
@@ -332,11 +323,11 @@ namespace UnitTest
         [Fact]
         public async Task UpdateReturns404OnNoSuchEntryOnTask()
         {
-            var repo = Repository.Entry();
+            var repo = Repository.Repo<Entry>();
             var ctrl = Controllers.Entry(repo);
 
             var entryIn = Data.Entry(Data.Task(1), 2);
-            var returnResult = await ctrl.UpdateEntry(1, 2, entryIn);
+            var returnResult = await ctrl.Update(2, entryIn);
             var notFoundObjectResult = Assert.IsType<NotFoundObjectResult>(returnResult);
             Assert.Equal("Entry 2 not found on task 1", notFoundObjectResult.Value);
             repo.Verify(r => r.Update(It.IsAny<int>(), It.IsAny<Entry>()), Times.Never);

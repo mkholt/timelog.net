@@ -18,7 +18,7 @@ namespace timelog.net
 
         public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
 
-        public DbSet<Entry?> Entries => Set<Entry>();
+        public DbSet<Entry> Entries => Set<Entry>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

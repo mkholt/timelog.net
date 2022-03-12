@@ -7,16 +7,16 @@ namespace UnitTest
 {
     internal static class Controllers
     {
-        public static TaskController Task(IMock<IRepository<ProjectTask>>? taskRepo = null)
+        public static TaskController Task(Mock<IRepository<ProjectTask>>? taskRepo = null)
         {
-            taskRepo ??= Repository.Task();
+            taskRepo ??= new();
 
             return new TaskController(taskRepo.Object);
         }
 
-        public static EntryController Entry(Mock<IEntryRepository>? repo = null, Mock<IRepository<ProjectTask>>? taskRepo = null)
+        public static EntryController Entry(Mock<IRepository<Entry>>? repo = null, Mock<IRepository<ProjectTask>>? taskRepo = null)
         {
-            repo ??= Repository.Entry();
+            repo ??= new();
             taskRepo ??= new();
 
             return new EntryController(repo.Object, taskRepo.Object);

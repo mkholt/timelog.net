@@ -28,7 +28,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Add Repositories
 builder.Services.AddScoped<IRepository<Project>, ProjectRepository>();
 builder.Services.AddScoped<IRepository<ProjectTask>, TaskRepository>();
-builder.Services.AddScoped<IEntryRepository, EntryRepository>();
+builder.Services.AddScoped<IRepository<Entry>, EntryRepository>();
 
 var app = builder.Build();
 
