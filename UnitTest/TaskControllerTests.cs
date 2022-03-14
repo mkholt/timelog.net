@@ -159,7 +159,7 @@ public class TaskControllerTests
     public async Task DeleteReturns404OnFail()
     {
         var repo = Repository.Repo<ProjectTask, bool>((r => r.Remove(It.IsAny<int>()), false));
-        
+
         var ctrl = Controllers.Task(repo);
 
         var taskIn = Data.Task();

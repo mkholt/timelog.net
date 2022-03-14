@@ -52,15 +52,15 @@ namespace timelog.net.Controllers
 
         [HttpPut]
         [Route("start")]
-        public async Task<ActionResult<Entry>> StartTask(int taskId, [FromBody] string? note)
+        public async Task<ActionResult<Entry>> StartTask([FromBody] string? note)
         {
             return await HandleRequest(null, async () =>
             {
                 var active = CurrentActive;
-                if (active is not null) throw new ControllerException(Conflict("Task already started: " + taskId));
+                if (active is not null) throw new ControllerException(Conflict("Task already started: " + TaskId));
                 var entry = await _entryRepository.Add(new Entry
                 {
-                    TaskId = taskId,
+                    TaskId = TaskId,
                     StartTime = DateTime.UtcNow,
                     Note = note
                 });
@@ -71,12 +71,12 @@ namespace timelog.net.Controllers
 
         [HttpPut]
         [Route("stop")]
-        public async Task<ActionResult<Entry>> StopTask(int taskId, [FromBody] string? note)
+        public async Task<ActionResult<Entry>> StopTask([FromBody] string? note)
         {
             return await HandleRequest(null, async () =>
             {
                 var active = CurrentActive;
-                if (active is null) throw new ControllerException(Conflict("Task is not started: " + taskId));
+                if (active is null) throw new ControllerException(Conflict("Task is not started: " + TaskId));
 
                 active.EndTime = DateTime.UtcNow;
                 active.Note = note;

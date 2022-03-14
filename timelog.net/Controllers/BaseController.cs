@@ -11,7 +11,8 @@ namespace timelog.net.Controllers;
 
 public abstract class BaseController<TType> : Controller
 {
-    protected virtual string EntityName => HttpContext.Request.RouteValues["Controller"] as string ?? "Entity";
+    [FromRoute(Name = "Controller")]
+    public virtual string EntityName { get; set; } = string.Empty;
 
     private readonly IRepository<TType> _repository;
 

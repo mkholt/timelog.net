@@ -10,9 +10,7 @@ namespace timelog.net.Controllers
 {
     [Route("[controller]")]
     public class TaskController : BaseController<ProjectTask>
-    {
-        protected override string EntityName => "Task";
-        
+    {        
         public TaskController(IRepository<ProjectTask> taskRepository) : base(taskRepository)
         {
         }

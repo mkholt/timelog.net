@@ -11,15 +11,22 @@ namespace UnitTest
         {
             taskRepo ??= new();
 
-            return new TaskController(taskRepo.Object);
+            return new TaskController(taskRepo.Object)
+            {
+                EntityName = "Task"
+            };
         }
 
-        public static EntryController Entry(Mock<IRepository<Entry>>? repo = null, Mock<IRepository<ProjectTask>>? taskRepo = null)
+        public static EntryController Entry(Mock<IRepository<Entry>>? repo = null, Mock<IRepository<ProjectTask>>? taskRepo = null, int taskId = default)
         {
             repo ??= new();
             taskRepo ??= new();
 
-            return new EntryController(repo.Object, taskRepo.Object);
+            return new EntryController(repo.Object, taskRepo.Object)
+            {
+                EntityName = "Entry",
+                TaskId = taskId
+            };
         }
     }
 }
