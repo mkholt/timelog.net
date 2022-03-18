@@ -1,13 +1,25 @@
-import React from 'react';
+import React from "react";
 
 import {
-    ActionButton, getTheme, Icon, Link, MessageBar, MessageBarType, Separator, Stack, Text
-} from '@fluentui/react';
-import { useBoolean } from '@fluentui/react-hooks/lib/useBoolean';
+	ActionButton,
+	getTheme,
+	Icon,
+	Link,
+	MessageBar,
+	MessageBarType,
+	Separator,
+	Spinner,
+	Stack,
+	Text,
+} from "@fluentui/react";
+import { useBoolean } from "@fluentui/react-hooks/lib/useBoolean";
 
 //import { AddProjectPanel } from "../components/settings/addProjectPanel";
 //import { AddProject, CloseProject, GetProjects } from "../connectors";
-import { GetProjects, IProject } from './project';
+import {
+	GetProjects,
+	IProject,
+} from "./project";
 
 //import Context from "../context";
 
@@ -22,8 +34,7 @@ export const Settings = () => {
 	const [message, setMessage] = React.useState<IMessage>()
 	const [projects, setProjects] = React.useState<IProject[]>([])
 
-	const loadProjects = () => { GetProjects().then(setProjects) }
-	React.useEffect(loadProjects, [])
+	React.useEffect(() => { GetProjects().then(setProjects) }, [])
 
 	const [showPanel, { toggle: toggleShowPanel }] = useBoolean(false)
 	/*const onAddProject = React.useCallback(
@@ -83,6 +94,11 @@ export const Settings = () => {
 								</Link>
 							</Stack>
 						))}
+						{!projects.length && (
+							<Stack horizontal>
+								<Spinner label='Loading projects' labelPosition='right' />
+							</Stack>
+						)}
 					</Stack>
 				</Stack.Item>
 			</Stack>

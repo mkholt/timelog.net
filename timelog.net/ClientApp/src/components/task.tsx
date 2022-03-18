@@ -1,10 +1,20 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React from "react";
 
-import { DefaultButton, getTheme, PrimaryButton, Stack, TextField } from '@fluentui/react';
+import {
+	useNavigate,
+	useParams,
+} from "react-router-dom";
 
-import { IconPicker } from './IconPicker';
-import { ITask } from './pages/project';
+import {
+	DefaultButton,
+	getTheme,
+	PrimaryButton,
+	Stack,
+	TextField,
+} from "@fluentui/react";
+
+import IconPicker from "./IconPicker";
+import { ITask } from "./pages/project";
 
 const theme = getTheme()
 
@@ -13,6 +23,7 @@ export const Task = () => {
 
 	const [task, setTask] = React.useState<ITask>()
 	const [newTask, setNewTask] = React.useState<INewTask>({})
+
 	const navigate = useNavigate()
 
 	React.useEffect(() => { if (taskId) { loadTask(taskId).then(t => setTask(t)) } }, [taskId])
@@ -23,13 +34,19 @@ export const Task = () => {
 		if (await saveTask(newTask, task)) onClose()
 	}, [onClose, task, newTask])
 
+	const title = React.useMemo(() => newTask.title ?? task?.title ?? "", [newTask.title, task])
+	const externalId = React.useMemo(() => newTask.externalId ?? task?.externalId ?? "", [newTask.externalId, task])
+	const url = React.useMemo(() => newTask.url ?? task?.url ?? "", [newTask.url, task])
+	const icon = React.useMemo(() => newTask.icon ?? task?.icon ?? "", [newTask.icon, task])
+
+
 	return (
 		<Stack tokens={{ childrenGap: theme.spacing.m }}>
 			<Stack tokens={{ childrenGap: theme.spacing.s2 }}>
-				<TextField label={"Title"} value={newTask.title ?? task?.title} onChange={(_, t) => setNewTask({...newTask, title: t})} />
-				<TextField label={"External ID"} value={newTask.externalId ?? task?.externalId} onChange={(_, i) => setNewTask({...newTask, externalId: i})} />
-				<TextField label={"URL"} value={newTask.url ?? task?.url} onChange={(_, u) => setNewTask({...newTask, url: u})} />
-				<IconPicker label={"Icon"} value={newTask.icon ?? task?.icon} onChange={i => setNewTask({...newTask, icon: i})} />
+				<TextField label={"Title"} value={title} onChange={(_, t) => setNewTask({...newTask, title: t})} />
+				<TextField label={"External ID"} value={externalId} onChange={(_, i) => setNewTask({...newTask, externalId: i})} />
+				<TextField label={"URL"} value={url} onChange={(_, u) => setNewTask({...newTask, url: u})} />
+				<IconPicker label={"Icon"} value={icon} onChange={i => setNewTask({...newTask, icon: i})} />
 			</Stack>
 			<Stack horizontal tokens={{ childrenGap: theme.spacing.s2 }} horizontalAlign={"end"}>
 				<PrimaryButton text={"Save"} onClick={onSave} />
